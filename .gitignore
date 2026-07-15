@@ -1,0 +1,16 @@
+# Dependencies
+**/node_modules/
+
+# Environments and Secrets
+**/.env
+
+# Logs
+**/npm-debug.log*
+**/yarn-error.log*
+
+# Editor directories (Optional)
+**/.vscode/
+**/.idea/
+
+dist/
+build/
