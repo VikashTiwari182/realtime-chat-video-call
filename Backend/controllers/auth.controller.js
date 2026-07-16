@@ -1,3 +1,4 @@
+import { upsertStreamUser } from "../config/stream.js";
 import User from "../model/User.model.js";
 import generateToken from "../util/token.js";
 
@@ -30,6 +31,7 @@ export const signup=async(req, res)=>{
         const newUser=new User({email, password, name, gender, profilePic});
         await newUser.save();
 
+        const streamResponse=await upsertStreamUser(newUser);
         const token=generateToken(newUser);
 
         res.cookie("token", token, {
@@ -86,5 +88,46 @@ export const logout=async(req, res)=>{
         return res.status(200).json({message: "Logout successful"});
     } catch (error) {
         return res.status(500).json({message: "Internal server error"});
+    }
+}
+
+export const onboard=async(req, res)=>{
+    try {
+        const userId=req.userId;
+
+        const {fullName, bio, nativeLanguage, learningLanguage, location}=req.body;
+
+        if(!fullName || !bio || !nativeLanguage || !learningLanguage || !location){
+            return res.status(400).json({message:"All fields are required"});
+        }
+
+        const updatedUser=await User.findByIdAndUpdate(userId, {
+            fullName, bio, nativeLanguage, learningLanguage, location, isOnboarded:true
+        }, {returnDocument:"after"});
+
+        if(!updatedUser){
+            return res.status(400).json({message:"user not found"});
+        }
+
+        const streamResponse=await upsertStreamUser(updatedUser);
+    } catch (error) {
+        console.log("Onboarding Error", error.message);
+        return res.status(500).json({message: "Internal server error"});
+    }
+}
+
+export const getUser=async(req, res)=>{
+    try {
+        const userId=req.userId;
+
+        const user=await User.findById(userId).select("-password");
+        if(!user){
+            return res.status(404).json({message:"User not found"});
+        }
+
+
+        return  res.status(200).json(user)
+    } catch (error) {
+         return res.status(500).json({message: "Internal server error"});
     }
 }
